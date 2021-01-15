@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:maps="clr-namespace:Xamarin.Forms.Maps;assembly=Xamarin.Forms.Maps"
+             x:Class="TaxiClient.MainPage">
+
+    <StackLayout>
+        <Frame WidthRequest="750" HeightRequest="700">
+            <maps:Map x:Name="map" >
+                <x:Arguments>
+                    <maps:MapSpan>
+                        <x:Arguments>
+                            <maps:Position>
+                                <x:Arguments>
+                                    <x:Double>59.923352</x:Double>
+                                    <x:Double>30.328699</x:Double>
+                                </x:Arguments>
+                            </maps:Position>
+                            <x:Double>0.8</x:Double>
+                            <x:Double>0.8</x:Double>
+                        </x:Arguments>
+                    </maps:MapSpan>
+                </x:Arguments>
+                <maps:Map.MapElements>
+                    <maps:Polyline x:Name="polylineOrder" StrokeColor="Red" StrokeWidth="12">
+                        <maps:Polyline.Geopath>
+                        </maps:Polyline.Geopath>
+                    </maps:Polyline>
+                    <maps:Polyline x:Name="polylineDriver" StrokeColor="Blue" StrokeWidth="12">
+                        <maps:Polyline.Geopath>
+                        </maps:Polyline.Geopath>
+                    </maps:Polyline>
+                </maps:Map.MapElements>
+            </maps:Map>
+        </Frame>
+        <Entry x:Name="PlaceFrom" Placeholder="Точка отправления"/>
+        <Entry x:Name="PlaceTo" Placeholder="Точка прибытия"/>
+        <StackLayout Orientation="Horizontal">
+            <Button Text="Найти маршрут" Clicked="PlaceChanged"/>
+            <Button Text="Поехали" Clicked="Confirm"/>
+        </StackLayout>
+        
+    </StackLayout>
+
+</ContentPage>
