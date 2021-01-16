@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Xamarin.Essentials;
 
 namespace TaxiClient
 {
@@ -15,7 +16,7 @@ namespace TaxiClient
         private static readonly HttpClient client = new HttpClient();
         public static DriverLocation[] GetDriversLocations()
         {
-            ServicePointManager.ServerCertificateValidationCallback += (o, c, ch, er) => true;
+            
             var request = WebRequest.Create("https://localhost:44368/Api/FreeDriversLocations");
             WebResponse response;
             try
@@ -44,9 +45,8 @@ namespace TaxiClient
             return result;
         }
 
-        public static async Task<bool> SendOrder(int userId, double longitudeFrom, double latitudeFrom, double longitudeTo, double latitudeTo)
+        public static async Task<int> SendOrder(int userId, double longitudeFrom, double latitudeFrom, double longitudeTo, double latitudeTo)
         {
-            ServicePointManager.ServerCertificateValidationCallback += (o, c, ch, er) => true;
 
             var values = new Dictionary<string, string>
             {
@@ -59,9 +59,55 @@ namespace TaxiClient
 
             var content = new FormUrlEncodedContent(values);
             var response = await client.PostAsync("https://localhost:44368/Api/CreateOrder", content);
-            return response.IsSuccessStatusCode;
+            int r;
+            if(int.TryParse(await response.Content.ReadAsStringAsync(),out r))
+            {
+                return r;
+            }
+            return -2;   
+        }
+        public static async Task<OrderStatus> GetOrder()
+        {
+            WebResponse response;
+            try
+            {
+                //#TODO int id = int.Parse(await SecureStorage.GetAsync("UserId"));
+                int id = 2;
+                var request = WebRequest.Create($"https://localhost:44368/Api/UserOrder?userId={id}");
+                response = request.GetResponse();
+            }
+            catch
+            {
+                return null;
+            }
+            OrderStatus result;
+            using (Stream stream = response.GetResponseStream())
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                string r = reader.ReadLine();
+                try
+                {
+                    result = JsonConvert.DeserializeObject<OrderStatus>(r);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            return result;
         }
 
+    }
+
+    public class OrderStatus
+    {
+        public int Status { get; set; }
+        public double longitudeFrom { get; set; }
+        public double latitudeFrom { get; set; }
+        public double longitudeTo { get; set; }
+        public double latitudeTo { get; set; }
+        public double? longitudeDriver { get; set; }
+        public double? latitudeDriver { get; set; }
     }
 
     public class DriverLocation
@@ -71,17 +117,6 @@ namespace TaxiClient
         public string driverCar { get; set; }
         public double? longitude { get; set; }
         public double? latitude { get; set; }
-    }
-
-
-    public class OrderLocation
-    {
-        public int orderID { get; set; }
-        public string userName { get; set; }
-        public double longitudeFrom { get; set; }
-        public double latitudeFrom { get; set; }
-        public double longitudeTo { get; set; }
-        public double latitudeTo { get; set; }
     }
 }
 
