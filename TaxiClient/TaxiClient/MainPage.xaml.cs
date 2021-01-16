@@ -66,9 +66,13 @@ namespace TaxiClient
             return response.ResourceSets.First().Resources.OfType<Route>().First().TravelDistance;
         }
 
-        private void Confirm(object sender, EventArgs e)
+        private async void Confirm(object sender, EventArgs e)
         {
+            Geocoder geo = new Geocoder();
+            var place1 = (await geo.GetPositionsForAddressAsync(PlaceFrom.Text)).FirstOrDefault();
+            var place2 = (await geo.GetPositionsForAddressAsync(PlaceTo.Text)).FirstOrDefault();
 
+            Server.SendOrder(2, place1.Latitude, place1.Longitude, place2.Latitude, place2.Longitude);
         }
 
         private void PlaceChanged(object sender, EventArgs e)
