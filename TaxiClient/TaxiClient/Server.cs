@@ -110,13 +110,5 @@ namespace TaxiClient
         public double? latitudeDriver { get; set; }
     }
 
-    public class DriverLocation
-    {
-        public int driverID { get; set; }
-        public string driverName { get; set; }
-        public string driverCar { get; set; }
-        public double? longitude { get; set; }
-        public double? latitude { get; set; }
-    }
 }
 

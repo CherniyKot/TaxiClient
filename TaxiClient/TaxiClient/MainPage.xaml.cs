@@ -17,16 +17,13 @@ namespace TaxiClient
     public partial class MainPage : ContentPage
     {
         Timer RP;
-        DriverLocation[] drivers;
         public MainPage()
         {
             InitializeComponent();
             ServicePointManager.ServerCertificateValidationCallback += (o, c, ch, er) => true;
             
 
-            //RefreshPositions(null, null);
             RP = new Timer(1000);
-            //RP.Elapsed += RefreshPositions;
             RP.Elapsed += CheckOrderStatus;
             RP.Start();
         }
@@ -93,7 +90,6 @@ namespace TaxiClient
                 RP?.Start();
                 return;
             }
-            //map.Pins.Clear(); //#todo
             if (t.Status != 1)
             {
                 if (map.Pins.Where(p => p.Label == "Taxi").Count() == 0)
@@ -127,36 +123,7 @@ namespace TaxiClient
             RP?.Start();
         }
 
-        public void RefreshPositions(object sender, ElapsedEventArgs e)
-        {
-            RP?.Stop();
-            drivers = Server.GetDriversLocations();
-            Geocoder geo = new Geocoder();
-            foreach (var driver in drivers)
-            {
-                if (map.Pins.Any(d => d != null && d.Type == PinType.SavedPin && d.Label == driver.driverID.ToString()))
-                {
-                    Dispatcher.BeginInvokeOnMainThread(() => map.Pins.Where(d => d.Type == PinType.SavedPin && d.Label == driver.driverID.ToString()).First().Position = new Position(driver.latitude ?? 0, driver.longitude ?? 0));
-                }
-                else
-                {
-                    Dispatcher.BeginInvokeOnMainThread(() => {
-                        var pin = new Pin()
-                        {
-                            Position = new Position(driver.latitude ?? 0, driver.longitude ?? 0),
-                            Label = driver.driverID.ToString(),
-                            Type = PinType.SavedPin
-                        };
-                        map.Pins.Add(pin);
-                    });
-                }
-            }
-            foreach (var pin in map.Pins.Where(p => p != null && p.Type == PinType.SavedPin))
-            {
-                if (!drivers.Select(d => d.driverID.ToString()).Contains(pin.Label)) Dispatcher.BeginInvokeOnMainThread(() => map.Pins.Remove(pin));
-            }
-            RP?.Start();
-        }
+        
     }
 
 
