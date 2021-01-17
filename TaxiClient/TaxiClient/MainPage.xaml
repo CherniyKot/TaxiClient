@@ -36,8 +36,19 @@
         <Entry x:Name="PlaceFrom" Placeholder="Точка отправления"/>
         <Entry x:Name="PlaceTo" Placeholder="Точка прибытия"/>
         <StackLayout Orientation="Horizontal">
-            <Button Text="Найти маршрут" Clicked="PlaceChanged"/>
-            <Button Text="Поехали" Clicked="Confirm"/>
+            <StackLayout Orientation="Horizontal" x:Name="OrderLayout">
+                <Button Text="Найти маршрут" Clicked="PlaceChanged"/>
+                <Button Text="Поехали" Clicked="Confirm"/>
+            </StackLayout>
+            <StackLayout Orientation="Horizontal" IsVisible="False" x:Name="CostLayout">
+                <Frame>
+                    <StackLayout Orientation="Horizontal">
+                        <Label Text="Стоимость поездки - "/>
+                        <Label Text="0" x:Name="Cost"/>
+                    </StackLayout>
+                </Frame>
+                <Button Text="Отменить поездку" Clicked="Button_Clicked"/>
+            </StackLayout>
         </StackLayout>
         
     </StackLayout>

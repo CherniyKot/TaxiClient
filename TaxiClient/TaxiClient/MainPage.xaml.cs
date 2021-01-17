@@ -17,11 +17,13 @@ namespace TaxiClient
     public partial class MainPage : ContentPage
     {
         Timer RP;
+        OrderStatus order;
         public MainPage()
         {
             InitializeComponent();
             ServicePointManager.ServerCertificateValidationCallback += (o, c, ch, er) => true;
-            
+
+            CheckOrderStatus(null, null);
 
             RP = new Timer(1000);
             RP.Elapsed += CheckOrderStatus;
@@ -76,54 +78,90 @@ namespace TaxiClient
             }
         }
 
-        private void PlaceChanged(object sender, EventArgs e)
+        private async void PlaceChanged(object sender, EventArgs e)
         {
-            DrawPolyline(polylineOrder, new SimpleWaypoint(PlaceFrom.Text), new SimpleWaypoint(PlaceTo.Text));
+            Geocoder geo = new Geocoder();
+            var place1 = (await geo.GetPositionsForAddressAsync(PlaceFrom.Text)).FirstOrDefault();
+            var place2 = (await geo.GetPositionsForAddressAsync(PlaceTo.Text)).FirstOrDefault();
+            DrawPolyline(polylineOrder, new SimpleWaypoint(place1.Latitude, place1.Longitude), new SimpleWaypoint(place2.Latitude, place2.Longitude));
         }
 
         public async void CheckOrderStatus(object sender, ElapsedEventArgs e)
         {
             RP?.Stop();
-            var t = await Server.GetOrder();
-            if (t == null)
+            order = await Server.GetOrder();
+            if (order == null || order.Status == 0)
             {
+                Dispatcher.BeginInvokeOnMainThread(() =>
+                {
+                    CostLayout.IsVisible = false;
+                    OrderLayout.IsVisible = true;
+                    PlaceFrom.IsVisible = true;
+                    PlaceTo.IsVisible = true;
+                });
+                if (polylineDriver.Geopath.Any())
+                    Dispatcher.BeginInvokeOnMainThread(() =>
+                    {
+                        polylineDriver.Geopath.Clear();
+                        polylineOrder.Geopath.Clear();
+                    });
+                map.Pins.Clear();
                 RP?.Start();
                 return;
             }
-            if (t.Status != 1)
+            Dispatcher.BeginInvokeOnMainThread(() =>
+                {
+                    CostLayout.IsVisible = true;
+                    OrderLayout.IsVisible = false;
+                    PlaceFrom.IsVisible = false;
+                    PlaceTo.IsVisible = false;
+                    Cost.Text = order.Cost.ToString();
+                });
+            if (order.Status != 1)
             {
                 if (map.Pins.Where(p => p.Label == "Taxi").Count() == 0)
                     map.Pins.Add(new Pin()
                     {
                         Label = "Taxi",
-                        Position = new Position(t.latitudeDriver.Value, t.longitudeDriver.Value),
+                        Position = new Position(order.latitudeDriver.Value, order.longitudeDriver.Value),
                         Type = PinType.SavedPin
                     });
                 else
-                    map.Pins.Where(p => p.Label == "Taxi").FirstOrDefault().Position = new Position(t.latitudeDriver.Value, t.longitudeDriver.Value);
+                    map.Pins.Where(p => p.Label == "Taxi").FirstOrDefault().Position = new Position(order.latitudeDriver.Value, order.longitudeDriver.Value);
             }
-            if (t.Status == 2)
-                Dispatcher.BeginInvokeOnMainThread(async () => await DrawPolyline(polylineDriver, new SimpleWaypoint(t.latitudeDriver.Value, t.longitudeDriver.Value), new SimpleWaypoint(t.latitudeFrom, t.longitudeFrom)));
+
+
+            if (order.Status == 2)
+                Dispatcher.BeginInvokeOnMainThread(async () =>
+                {
+                    await DrawPolyline(polylineDriver, new SimpleWaypoint(order.latitudeDriver.Value, order.longitudeDriver.Value), new SimpleWaypoint(order.latitudeFrom, order.longitudeFrom));
+                    polylineOrder.Geopath.Clear();
+                });
             if (map.Pins.Where(p => p.Label == "Location").Count() == 0)
             {
                 map.Pins.Add(new Pin()
                 {
                     Label = "Location",
-                    Position = new Position(t.latitudeFrom, t.longitudeFrom),
+                    Position = new Position(order.latitudeFrom, order.longitudeFrom),
                     Type = PinType.Place
                 });
                 map.Pins.Add(new Pin()
                 {
                     Label = "Destination",
-                    Position = new Position(t.latitudeTo, t.longitudeTo),
+                    Position = new Position(order.latitudeTo, order.longitudeTo),
                     Type = PinType.Place
                 });
             }
-            if (polylineOrder.Geopath.Count==0) Dispatcher.BeginInvokeOnMainThread (async()=> await DrawPolyline(polylineOrder, new SimpleWaypoint(t.latitudeFrom, t.longitudeFrom), new SimpleWaypoint(t.latitudeTo, t.longitudeTo)));
+            if (polylineOrder.Geopath.Count==0) Dispatcher.BeginInvokeOnMainThread (async()=> await DrawPolyline(polylineOrder, new SimpleWaypoint(order.latitudeFrom, order.longitudeFrom), new SimpleWaypoint(order.latitudeTo, order.longitudeTo)));
             RP?.Start();
         }
 
-        
+        private void Button_Clicked(object sender, EventArgs e)
+        {
+#warning TODO
+            int id = 2;
+            Server.CancelOrder(id);
+        }
     }
 
 

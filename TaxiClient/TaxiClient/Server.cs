@@ -14,36 +14,6 @@ namespace TaxiClient
     public static class Server
     {
         private static readonly HttpClient client = new HttpClient();
-        public static DriverLocation[] GetDriversLocations()
-        {
-            
-            var request = WebRequest.Create("https://localhost:44368/Api/FreeDriversLocations");
-            WebResponse response;
-            try
-            {
-                response = request.GetResponse();
-            }
-            catch
-            {
-                return new DriverLocation[] { };
-            }
-
-            DriverLocation[] result;
-            using (Stream stream = response.GetResponseStream())
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                string r = reader.ReadLine();
-                try
-                {
-                    result = JsonConvert.DeserializeObject<DriverLocation[]>(r);
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-            return result;
-        }
 
         public static async Task<int> SendOrder(int userId, double longitudeFrom, double latitudeFrom, double longitudeTo, double latitudeTo)
         {
@@ -51,10 +21,10 @@ namespace TaxiClient
             var values = new Dictionary<string, string>
             {
                 { "userId", userId.ToString() },
-                { "longitudeFrom", longitudeFrom.ToString().Replace('.',',') },
-                { "latitudeFrom", latitudeFrom.ToString().Replace('.',',') },
-                { "longitudeTo", longitudeTo.ToString().Replace('.',',') },
-                { "latitudeTo", latitudeTo.ToString().Replace('.',',') }
+                { "longitudeFrom", longitudeFrom.ToString("F9").Replace('.',',') },
+                { "latitudeFrom", latitudeFrom.ToString("F9").Replace('.',',') },
+                { "longitudeTo", longitudeTo.ToString("F9").Replace('.',',') },
+                { "latitudeTo", latitudeTo.ToString("F9").Replace('.',',') }
             };
 
             var content = new FormUrlEncodedContent(values);
@@ -97,6 +67,17 @@ namespace TaxiClient
             return result;
         }
 
+        public static void CancelOrder(int userId)
+        {
+            var values = new Dictionary<string, string>
+            {
+                { "userId", userId.ToString() }
+            };
+
+            var content = new FormUrlEncodedContent(values);
+            client.PostAsync("https://localhost:44368/Api/CancelOrder", content);
+        }
+
     }
 
     public class OrderStatus
@@ -108,6 +89,7 @@ namespace TaxiClient
         public double latitudeTo { get; set; }
         public double? longitudeDriver { get; set; }
         public double? latitudeDriver { get; set; }
+        public double Cost { get; set; }
     }
 
 }
